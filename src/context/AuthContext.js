@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios"; // 1. IMPORT AXIOS
 
 const AuthContext = createContext();
 
@@ -11,8 +12,6 @@ export function AuthProvider({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    // We still use localStorage to store the "Session" 
-    // so the user stays logged in when they refresh.
     const savedUser = localStorage.getItem("my_session");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
@@ -22,42 +21,30 @@ export function AuthProvider({ children }) {
 
   const handleLogin = async (email, password) => {
     try {
-      // FETCHING FROM OUR BACKEND API
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      // 2. USE AXIOS FOR LOGIN
+      // Axios automatically handles JSON stringifying and parsing!
+      const response = await axios.post("/api/auth/login", { email, password });
 
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error);
+      const data = response.data; // Data is inside .data property
 
       setUser(data.user);
       localStorage.setItem("my_session", JSON.stringify(data.user));
       router.push("/");
     } catch (err) {
-      alert(err.message);
+      // Axios puts server error messages in err.response.data
+      alert(err.response?.data?.error || "Login failed");
     }
   };
 
   const handleSignup = async (email, password, role) => {
     try {
-      // SENDING DATA TO OUR BACKEND API
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error);
-
-      alert("Signup successful on backend! Please login.");
+      // 3. USE AXIOS FOR SIGNUP
+      const response = await axios.post("/api/auth/signup", { email, password, role });
+      
+      alert(response.data.message);
       router.push("/login");
     } catch (err) {
-      alert(err.message);
+      alert(err.response?.data?.error || "Signup failed");
     }
   };
 

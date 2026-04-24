@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import axios from "axios"; // Import Axios
 
-/**
- * ADMIN PAGE (TALKING TO API BACKEND)
- */
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -15,18 +13,20 @@ export default function AdminPage() {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
 
-  // Protection Logic
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
       router.push("/login");
     }
   }, [user, loading, router]);
 
-  // Fetch from BACKEND API
+  // FETCH TASKS WITH AXIOS
   const fetchTasks = async () => {
-    const res = await fetch("/api/tasks");
-    const data = await res.json();
-    setTasks(data);
+    try {
+      const res = await axios.get("/api/tasks");
+      setTasks(res.data); // Axios put response body in .data
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
   };
 
   useEffect(() => {
@@ -39,54 +39,51 @@ export default function AdminPage() {
     e.preventDefault();
     if (!title || !desc) return alert("Fill fields!");
 
-    // SEND TO BACKEND API
-    const res = await fetch("/api/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, desc }),
-    });
-
-    if (res.ok) {
+    try {
+      // POST WITH AXIOS (No need for JSON.stringify!)
+      await axios.post("/api/tasks", { title, desc });
       setTitle("");
       setDesc("");
-      fetchTasks(); // Refresh list from server
+      fetchTasks();
+    } catch (err) {
+      alert("Error adding task");
     }
   };
 
   const handleDelete = async (id) => {
-    // DELETE VIA BACKEND API
-    const res = await fetch(`/api/tasks?id=${id}`, {
-      method: "DELETE",
-    });
-
-    if (res.ok) {
-      fetchTasks(); // Refresh list from server
+    try {
+      // DELETE WITH AXIOS
+      // We pass the ID as a query parameter
+      await axios.delete(`/api/tasks`, { params: { id } });
+      fetchTasks();
+    } catch (err) {
+      alert("Error deleting task");
     }
   };
 
   if (loading || !user || user.role !== "admin") {
-    return <div className="section container">Checking Permissions...</div>;
+    return <div className="section container">Loading...</div>;
   }
 
   return (
     <div className="section container animate-fade">
       <header style={{ marginBottom: "40px", textAlign: "center" }}>
-        <h1>Backend <span style={{ color: "var(--accent-primary)" }}>Admin</span></h1>
-        <p style={{ color: "var(--text-muted)" }}>This data is stored on the SERVER in src/lib/db.json</p>
+        <h1>Backend Admin <span style={{ color: "var(--accent-primary)" }}>(Axios)</span></h1>
+        <p style={{ color: "var(--text-muted)" }}>Managing server-side JSON database using Axios library.</p>
       </header>
 
       <div className="grid" style={{ gridTemplateColumns: "1fr 2fr" }}>
         <div className="glass" style={{ padding: "30px" }}>
-          <h2>Add Task</h2>
+          <h2>New Task</h2>
           <form onSubmit={handleAddTask}>
             <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
             <textarea placeholder="Description" value={desc} onChange={(e) => setDesc(e.target.value)} />
-            <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>Save to Server</button>
+            <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>Save via Axios</button>
           </form>
         </div>
 
         <div className="glass" style={{ padding: "30px" }}>
-          <h2>Server Records</h2>
+          <h2>Database Records</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {tasks.map((task) => (
               <div key={task.id} style={{ display: "flex", justifyContent: "space-between", padding: "10px", background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
