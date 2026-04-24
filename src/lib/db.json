@@ -1,0 +1,23 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Welcome to the Server Backend",
+      "desc": "This item is stored in a real JSON file on your server!"
+    }
+  ],
+  "users": [
+    {
+      "id": 1777042556232,
+      "email": "one@gmail.com",
+      "password": "123456",
+      "role": "user"
+    },
+    {
+      "id": 1777042648093,
+      "email": "two@gmail.com",
+      "password": "1234567",
+      "role": "admin"
+    }
+  ]
+}
